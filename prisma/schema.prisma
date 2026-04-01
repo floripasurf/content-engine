@@ -1,0 +1,90 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Brand {
+  id             String   @id @default(cuid())
+  name           String
+  slug           String   @unique
+  description    String
+  tone           String
+  targetAudience String
+  competitors    String
+  painPoints     String
+  colors         Json     // {primary: "#hex", secondary: "#hex"}
+  logoEmoji      String
+  platforms      String[]
+  scripts        Script[]
+  posts          Post[]
+  createdAt      DateTime @default(now())
+}
+
+model ContentPillar {
+  id          String           @id @default(cuid())
+  name        String
+  slug        String           @unique
+  description String
+  emotion     String
+  templates   ScriptTemplate[]
+  scripts     Script[]
+}
+
+model ScriptTemplate {
+  id          String        @id @default(cuid())
+  name        String
+  slug        String        @unique
+  pillarId    String
+  pillar      ContentPillar @relation(fields: [pillarId], references: [id])
+  structure   String
+  hookPattern String
+  ctaPattern  String
+  format      String
+  duration    Int
+  examples    String
+  scripts     Script[]
+}
+
+model Script {
+  id            String          @id @default(cuid())
+  brandId       String
+  brand         Brand           @relation(fields: [brandId], references: [id])
+  pillarId      String
+  pillar        ContentPillar   @relation(fields: [pillarId], references: [id])
+  templateId    String?
+  template      ScriptTemplate? @relation(fields: [templateId], references: [id])
+  title         String
+  hook          String
+  body          String
+  visualNotes   String
+  voiceoverText String?
+  duration      Int
+  status        String          @default("draft")
+  feedback      String?
+  posts         Post[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+}
+
+model Post {
+  id          String    @id @default(cuid())
+  scriptId    String
+  script      Script    @relation(fields: [scriptId], references: [id])
+  brandId     String
+  brand       Brand     @relation(fields: [brandId], references: [id])
+  platform    String
+  caption     String
+  hashtags    String[]
+  cta         String
+  scheduledAt DateTime?
+  publishedAt DateTime?
+  status      String    @default("draft")
+  mediaUrl    String?
+  metrics     Json?
+  createdAt   DateTime  @default(now())
+}
