@@ -85,6 +85,20 @@ export const seedBrands: Brand[] = [
     platforms: ["instagram", "linkedin"],
     createdAt: new Date().toISOString(),
   },
+  {
+    id: "brand_squad",
+    name: "Squad Performance",
+    slug: "squad",
+    logoEmoji: "🎯",
+    description: "SaaS de gestão de performance para PMEs. Avaliações de desempenho, metas, ciclos de feedback e relatórios — tudo simples e em português.",
+    tone: "Profissional mas acessível. Humor corporativo leve. Anti-burocracia. Fala a língua do gestor brasileiro que sofre com planilha.",
+    targetAudience: "Gestores de PMEs (10-200 funcionários), donos de empresa, RH de pequenas empresas, líderes de equipe que querem dar feedback sem drama",
+    competitors: "Planilhas de Excel/Google Sheets (todo mundo usa, ninguém gosta), Qulture.Rocks (caro, complexo demais pra PME), Feedz (focado em enterprise), avaliação informal no 1:1 (sem registro, sem dados), não fazer nada (a maioria das PMEs)",
+    painPoints: "Avaliação de desempenho feita em planilha que ninguém preenche, gestor que não sabe dar feedback construtivo, funcionário que não sabe onde precisa melhorar, zero visibilidade de quem performa e quem não, perder talento porque nunca deu reconhecimento, RH pedindo avaliação e ninguém responde, reunião de feedback que vira bate-papo sem resultado",
+    colors: { primary: "#1B3A6B", secondary: "#2563EB" },
+    platforms: ["instagram", "tiktok", "linkedin"],
+    createdAt: new Date().toISOString(),
+  },
 ];
 
 export const seedPillars: ContentPillar[] = [
