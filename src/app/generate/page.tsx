@@ -79,6 +79,7 @@ export default function GeneratePage() {
 
     // Call our API route
     try {
+      const tmpl = templates.find((t) => t.id === selectedTemplate);
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -88,6 +89,15 @@ export default function GeneratePage() {
           templateId: selectedTemplate || undefined,
           format: selectedFormat,
           customPrompt: customPrompt || undefined,
+          // Brand context for Claude CLI
+          brandName: brand?.name,
+          brandTone: brand?.tone,
+          brandPainPoints: brand?.painPoints,
+          brandCompetitors: brand?.competitors,
+          brandTargetAudience: brand?.targetAudience,
+          pillarName: pillar?.name,
+          pillarEmotion: pillar?.emotion,
+          templateStructure: tmpl?.structure,
         }),
       });
       const data = await res.json();
@@ -110,8 +120,36 @@ export default function GeneratePage() {
     setStep(3);
   };
 
-  const handleGenerateCaptions = () => {
+  const [generatingCaptions, setGeneratingCaptions] = useState(false);
+
+  const handleGenerateCaptions = async () => {
     if (!brand) return;
+    setGeneratingCaptions(true);
+
+    try {
+      const res = await fetch("/api/caption", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          hook: editHook,
+          bodyText: editBody,
+          platforms: brand.platforms,
+          brandSlug: brand.slug,
+          brandTone: brand.tone,
+        }),
+      });
+      const data = await res.json();
+      if (data.captions?.length) {
+        setCaptions(data.captions);
+        setGeneratingCaptions(false);
+        setStep(4);
+        return;
+      }
+    } catch {
+      // fall through to local fallback
+    }
+
+    // Local fallback if API fails
     const caps = brand.platforms.map((platform) => {
       const maxLen = platform === "tiktok" ? 150 : platform === "instagram" ? 300 : 500;
       const caption = `${editHook}\n\n${editBody.split("\n").slice(0, 3).join("\n").slice(0, maxLen)}...`;
@@ -130,6 +168,7 @@ export default function GeneratePage() {
       return { platform, caption, hashtags, cta };
     });
     setCaptions(caps);
+    setGeneratingCaptions(false);
     setStep(4);
   };
 

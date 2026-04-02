@@ -1,51 +1,55 @@
-// Caption generation API route
-// Full Claude integration ready — prototype uses template-based generation
+import { runClaudeJSON, buildCaptionPrompt } from "@/lib/claude-cli";
+
+// Caption generation — uses local Claude CLI (zero API cost)
+// Falls back to template-based generation if CLI unavailable
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const { hook, bodyText, platforms, brandSlug } = body as {
+  const { hook, bodyText, platforms, brandSlug, brandTone } = body as {
     hook: string;
     bodyText: string;
     platforms: string[];
     brandSlug: string;
+    brandTone?: string;
   };
 
-  // Check for Claude API key
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-
-  if (apiKey) {
-    // FULL CLAUDE API INTEGRATION
-    /*
-    const { Anthropic } = await import("@anthropic-ai/sdk");
-    const client = new Anthropic({ apiKey });
-
-    const response = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 2000,
-      system: `Voce e um social media manager brasileiro expert em legendas virais.
-Gere legendas otimizadas para cada plataforma. Cada legenda deve ter tamanho adequado a plataforma, hashtags relevantes e CTA claro.
-Responda em JSON: { "captions": [{ "platform": "...", "caption": "...", "hashtags": [...], "cta": "..." }] }`,
-      messages: [
-        {
-          role: "user",
-          content: `Roteiro:\nHook: ${hook}\nCorpo: ${bodyText}\n\nMarca: ${brandSlug}\nPlataformas: ${platforms.join(", ")}\n\nGere legendas otimizadas para cada plataforma.`,
-        },
-      ],
+  // Try Claude CLI first (local, zero cost)
+  if (hook && bodyText) {
+    const prompt = buildCaptionPrompt({
+      hook,
+      bodyText,
+      brandSlug,
+      brandTone: brandTone ?? "",
+      platforms,
     });
 
-    const text = response.content[0].type === "text" ? response.content[0].text : "";
-    return Response.json(JSON.parse(text));
-    */
+    const result = await runClaudeJSON<{
+      captions: Array<{
+        platform: string;
+        caption: string;
+        hashtags: string[];
+        cta: string;
+      }>;
+    }>(prompt);
+
+    if (result.success && result.data?.captions?.length) {
+      return Response.json({
+        captions: result.data.captions,
+        source: "claude-cli",
+      });
+    }
+
+    console.warn("[caption] Claude CLI failed, falling back to templates:", result.error);
   }
 
-  // PROTOTYPE: Template-based caption generation
-  await new Promise((resolve) => setTimeout(resolve, 800));
+  // FALLBACK: Template-based caption generation
+  await new Promise((resolve) => setTimeout(resolve, 300));
 
   const captions = platforms.map((platform) => {
     const isShort = platform === "tiktok" || platform === "story";
     const caption = isShort
       ? `${hook}\n\n${bodyText.split("\n")[0]}`
-      : `${hook}\n\n${bodyText.split("\n").slice(0, 4).join("\n")}\n\nSalva esse post pra nao esquecer.`;
+      : `${hook}\n\n${bodyText.split("\n").slice(0, 4).join("\n")}\n\nSalva esse post pra não esquecer. 🔖`;
 
     const hashtags = [
       `#${brandSlug}`,
@@ -58,13 +62,13 @@ Responda em JSON: { "captions": [{ "platform": "...", "caption": "...", "hashtag
 
     const cta =
       platform === "linkedin"
-        ? "Comenta o que voce acha."
+        ? "Comenta o que você acha. 👇"
         : platform === "youtube"
-          ? "Se inscreve e ativa o sino!"
-          : "Link na bio.";
+          ? "Se inscreve e ativa o sininho! 🔔"
+          : "Link na bio. 🔗";
 
     return { platform, caption, hashtags, cta };
   });
 
-  return Response.json({ captions });
+  return Response.json({ captions, source: "template" });
 }

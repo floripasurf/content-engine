@@ -1,99 +1,98 @@
 import { getSampleScripts } from "@/lib/sample-scripts";
+import { runClaudeJSON, buildScriptPrompt } from "@/lib/claude-cli";
 
-// Full Claude API integration — ready for when API key is available
-// For prototype: returns pre-written sample scripts
+// Script generation — uses local Claude CLI (zero API cost)
+// Falls back to sample scripts if CLI is unavailable
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const { brandId, pillarId, templateId, format, customPrompt } = body as {
+  const {
+    brandId,
+    pillarId,
+    templateId,
+    format,
+    customPrompt,
+    // Brand context passed from client for richer prompts
+    brandName,
+    brandTone,
+    brandPainPoints,
+    brandCompetitors,
+    brandTargetAudience,
+    pillarName,
+    pillarEmotion,
+    templateStructure,
+  } = body as {
     brandId: string;
     pillarId: string;
     templateId?: string;
     format: string;
     customPrompt?: string;
+    brandName?: string;
+    brandTone?: string;
+    brandPainPoints?: string;
+    brandCompetitors?: string;
+    brandTargetAudience?: string;
+    pillarName?: string;
+    pillarEmotion?: string;
+    templateStructure?: string;
   };
 
-  // Check for Claude API key in environment
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  // Try Claude CLI first (local, zero cost)
+  if (brandName && pillarName) {
+    const prompt = buildScriptPrompt({
+      brandName,
+      brandTone: brandTone ?? "",
+      brandPainPoints: brandPainPoints ?? "",
+      brandCompetitors: brandCompetitors ?? "",
+      brandTargetAudience: brandTargetAudience ?? "",
+      pillarName,
+      pillarEmotion: pillarEmotion ?? "",
+      format,
+      templateStructure,
+      customPrompt,
+    });
 
-  if (apiKey) {
-    // FULL CLAUDE API INTEGRATION
-    // Uncomment when @anthropic-ai/sdk is installed and API key is set
-    /*
-    const { Anthropic } = await import("@anthropic-ai/sdk");
-    const client = new Anthropic({ apiKey });
+    const result = await runClaudeJSON<{
+      scripts: Array<{
+        title: string;
+        hook: string;
+        body: string;
+        visualNotes: string;
+        duration: number;
+      }>;
+    }>(prompt);
 
-    // Would need to load brand/pillar/template from DB in production
-    const systemPrompt = `Voce e um roteirista viral brasileiro especialista em conteudo para redes sociais.
-Voce cria roteiros para a marca "${brandId}" com foco no pilar "${pillarId}".
-O formato e ${format}.
-${templateId ? `Use o template: ${templateId}` : "Crie livremente."}
-${customPrompt ? `Topico especifico: ${customPrompt}` : ""}
-
-REGRAS:
-- Linguagem brasileira, popular, direta
-- Hook nos primeiros 3 segundos que PARA o scroll
-- Use [TEXTO NA TELA], [CORTE], [TRANSICAO] como direcoes
-- Inclua notas visuais detalhadas
-- O conteudo deve ser VIRAL — humor, emocao, identificacao
-- Gere 3 variantes diferentes com hooks distintos
-
-Responda em JSON com esta estrutura:
-{
-  "scripts": [
-    {
-      "title": "titulo curto",
-      "hook": "hook dos primeiros 3 segundos",
-      "body": "roteiro completo com direcoes",
-      "visualNotes": "notas de producao visual",
-      "duration": 30
+    if (result.success && result.data?.scripts?.length) {
+      return Response.json({
+        scripts: result.data.scripts.map((s) => ({
+          brandId,
+          pillarId,
+          templateId: templateId ?? null,
+          title: s.title,
+          hook: s.hook,
+          body: s.body,
+          visualNotes: s.visualNotes,
+          voiceoverText: null,
+          duration: s.duration || 30,
+          status: "draft" as const,
+          feedback: null,
+        })),
+        source: "claude-cli",
+      });
     }
-  ]
-}`;
 
-    const response = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 4000,
-      system: systemPrompt,
-      messages: [
-        {
-          role: "user",
-          content: `Gere 3 variantes de roteiro viral para a marca, no pilar ${pillarId}, formato ${format}.${customPrompt ? ` Topico: ${customPrompt}` : ""}`,
-        },
-      ],
-    });
-
-    const text = response.content[0].type === "text" ? response.content[0].text : "";
-    const parsed = JSON.parse(text);
-
-    return Response.json({
-      scripts: parsed.scripts.map((s: Record<string, unknown>) => ({
-        brandId,
-        pillarId,
-        templateId: templateId || null,
-        title: s.title,
-        hook: s.hook,
-        body: s.body,
-        visualNotes: s.visualNotes,
-        voiceoverText: null,
-        duration: s.duration || 30,
-        status: "draft",
-        feedback: null,
-      })),
-    });
-    */
+    // Log CLI error but continue to fallback
+    console.warn("[generate] Claude CLI failed, falling back to samples:", result.error);
   }
 
-  // PROTOTYPE MODE: Return sample scripts
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 1500));
+  // FALLBACK: Sample scripts (when CLI unavailable or brand context missing)
+  await new Promise((resolve) => setTimeout(resolve, 500));
 
   const scripts = getSampleScripts(brandId, pillarId);
 
   return Response.json({
     scripts: scripts.map((s) => ({
       ...s,
-      // Override format-specific duration
       duration:
         format === "story"
           ? 15
@@ -103,5 +102,6 @@ Responda em JSON com esta estrutura:
               ? Math.min(s.duration, 60)
               : s.duration,
     })),
+    source: "sample",
   });
 }

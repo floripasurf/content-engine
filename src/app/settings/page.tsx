@@ -73,20 +73,18 @@ export default function SettingsPage() {
         )}
       </div>
 
-      {/* API Keys */}
+      {/* AI Generation */}
       <div className="bg-surface border border-border rounded-xl p-6">
-        <h2 className="font-semibold text-lg mb-4">API Keys</h2>
-        <div className="space-y-4">
+        <h2 className="font-semibold text-lg mb-4">Geração de Conteúdo com IA</h2>
+        <div className="flex items-center gap-3 p-4 rounded-lg bg-green-500/10 border border-green-500/20">
+          <span className="text-2xl">🖥️</span>
           <div>
-            <label className="block text-sm font-medium mb-1">Claude API Key (Anthropic)</label>
-            <p className="text-xs text-muted mb-2">Para geracao de roteiros com IA</p>
-            <input
-              type="password"
-              value={settings.claudeApiKey}
-              onChange={(e) => setSettings({ ...settings, claudeApiKey: e.target.value })}
-              placeholder="sk-ant-..."
-              className="w-full bg-background border border-border rounded-lg p-2.5 text-sm text-foreground placeholder:text-muted/50 focus:outline-none focus:border-accent"
-            />
+            <p className="font-medium text-green-400">Claude CLI Local — Custo Zero</p>
+            <p className="text-sm text-muted">
+              Os roteiros são gerados usando o Claude Code instalado no seu Mac.
+              Sem custo de API — usa sua assinatura existente.
+              O comando <code className="bg-background px-1.5 py-0.5 rounded text-xs font-mono">claude -p</code> é chamado automaticamente.
+            </p>
           </div>
         </div>
       </div>
