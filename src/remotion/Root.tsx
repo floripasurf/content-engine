@@ -36,7 +36,7 @@ export const RemotionRoot: React.FC = () => {
       {/* ---- NEW TEMPLATES ---- */}
       <Composition
         id="ViralReels"
-        component={ViralReels as React.FC<Record<string, unknown>>}
+        component={ViralReels as React.FC}
         durationInFrames={30 * FPS}
         fps={FPS}
         width={WIDTH}
@@ -50,7 +50,7 @@ export const RemotionRoot: React.FC = () => {
 
       <Composition
         id="StoryMode"
-        component={StoryMode as React.FC<Record<string, unknown>>}
+        component={StoryMode as React.FC}
         durationInFrames={30 * FPS}
         fps={FPS}
         width={WIDTH}
@@ -64,7 +64,7 @@ export const RemotionRoot: React.FC = () => {
 
       <Composition
         id="SplitComparison"
-        component={SplitComparison as React.FC<Record<string, unknown>>}
+        component={SplitComparison as React.FC}
         durationInFrames={30 * FPS}
         fps={FPS}
         width={WIDTH}
@@ -79,7 +79,7 @@ export const RemotionRoot: React.FC = () => {
       {/* ---- LEGACY TEMPLATES (backwards compat) ---- */}
       <Composition
         id="TextOnScreen"
-        component={TextOnScreen as React.FC<Record<string, unknown>>}
+        component={TextOnScreen as React.FC}
         durationInFrames={30 * FPS}
         fps={FPS}
         width={WIDTH}
@@ -92,7 +92,7 @@ export const RemotionRoot: React.FC = () => {
 
       <Composition
         id="StockFootage"
-        component={StockFootage as React.FC<Record<string, unknown>>}
+        component={StockFootage as React.FC}
         durationInFrames={30 * FPS}
         fps={FPS}
         width={WIDTH}
@@ -106,7 +106,7 @@ export const RemotionRoot: React.FC = () => {
 
       <Composition
         id="SplitScreen"
-        component={SplitScreen as React.FC<Record<string, unknown>>}
+        component={SplitScreen as React.FC}
         durationInFrames={30 * FPS}
         fps={FPS}
         width={WIDTH}
@@ -119,7 +119,7 @@ export const RemotionRoot: React.FC = () => {
 
       <Composition
         id="Carousel"
-        component={Carousel as React.FC<Record<string, unknown>>}
+        component={Carousel as React.FC}
         durationInFrames={30 * FPS}
         fps={FPS}
         width={WIDTH}
