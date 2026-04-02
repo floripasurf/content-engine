@@ -8,6 +8,7 @@ const nav = [
   { href: "/", label: "Dashboard", icon: "📊" },
   { href: "/brands", label: "Marcas", icon: "🏷️" },
   { href: "/generate", label: "Gerar Roteiros", icon: "✨" },
+  { href: "/vault", label: "Banco de Roteiros", icon: "🗄️" },
   { href: "/queue", label: "Fila de Aprovação", icon: "📋" },
   { href: "/publishing", label: "Publicação", icon: "🚀" },
   { href: "/calendar", label: "Calendário", icon: "📅" },
