@@ -1,11 +1,14 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { brandStore, scriptStore, postStore, pillarStore } from "@/lib/store";
+import { brandStore, scriptStore, postStore, pillarStore, settingsStore } from "@/lib/store";
 import { Brand, Script, Post, ContentPillar } from "@/lib/types";
+import type { AppSettings } from "@/lib/types";
+import Link from "next/link";
 import {
   cn,
   platformIcons,
+  platformNames,
   formatDateTime,
   statusLabels,
 } from "@/lib/utils";
@@ -26,17 +29,25 @@ export default function QueuePage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [pillars, setPillars] = useState<ContentPillar[]>([]);
   const [selectedScript, setSelectedScript] = useState<Script | null>(null);
+  const [settings, setSettingsState] = useState<AppSettings | null>(null);
   const [filterBrand, setFilterBrand] = useState("");
   const [filterPillar, setFilterPillar] = useState("");
   const [dragItem, setDragItem] = useState<string | null>(null);
   const [feedback, setFeedback] = useState("");
+  const [toast, setToast] = useState<string | null>(null);
 
   const reload = useCallback(() => {
     setBrands(brandStore.getAll());
     setScripts(scriptStore.getAll());
     setPosts(postStore.getAll());
     setPillars(pillarStore.getAll());
+    setSettingsState(settingsStore.get());
   }, []);
+
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3000);
+  };
 
   useEffect(() => {
     reload();
@@ -91,6 +102,7 @@ export default function QueuePage() {
     scriptStore.update(scriptId, { status: "approved" });
     reload();
     setSelectedScript(null);
+    showToast("Roteiro aprovado! Agendar publicacao?");
   };
 
   const handleReject = (scriptId: string) => {
@@ -214,6 +226,33 @@ export default function QueuePage() {
                           {script.feedback}
                         </div>
                       )}
+                      {/* Publish status for scheduled/published posts */}
+                      {scriptPosts.some((p) => p.externalUrl) && (
+                        <div className="mt-2 flex gap-1">
+                          {scriptPosts.filter((p) => p.externalUrl).map((p) => (
+                            <a
+                              key={p.id}
+                              href={p.externalUrl!}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[10px] text-accent hover:underline"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {platformIcons[p.platform]} Ver post
+                            </a>
+                          ))}
+                        </div>
+                      )}
+                      {/* Publish button for approved scripts */}
+                      {script.status === "approved" && scriptPosts.length > 0 && (
+                        <Link
+                          href="/publishing"
+                          className="mt-2 block text-center text-[10px] bg-accent/20 text-accent rounded py-1 hover:bg-accent/30 transition-colors"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          Publicar
+                        </Link>
+                      )}
                     </div>
                   );
                 })}
@@ -322,6 +361,18 @@ export default function QueuePage() {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Toast */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 bg-surface border border-border rounded-xl px-5 py-3 shadow-xl">
+          <div className="flex items-center gap-3">
+            <p className="text-sm">{toast}</p>
+            <Link href="/publishing" className="text-xs text-accent hover:underline whitespace-nowrap">
+              Ir para publicacao
+            </Link>
           </div>
         </div>
       )}

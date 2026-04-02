@@ -72,6 +72,7 @@ export const platformIcons: Record<string, string> = {
   tiktok: "🎵",
   youtube: "▶️",
   linkedin: "💼",
+  facebook: "📘",
 };
 
 export const platformNames: Record<string, string> = {
@@ -79,6 +80,15 @@ export const platformNames: Record<string, string> = {
   tiktok: "TikTok",
   youtube: "YouTube",
   linkedin: "LinkedIn",
+  facebook: "Facebook",
+};
+
+export const platformColors: Record<string, string> = {
+  instagram: "from-purple-500 to-pink-500",
+  tiktok: "from-gray-900 to-gray-700",
+  youtube: "from-red-600 to-red-500",
+  linkedin: "from-blue-700 to-blue-500",
+  facebook: "from-blue-600 to-blue-400",
 };
 
 export const statusColors: Record<string, string> = {

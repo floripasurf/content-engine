@@ -65,4 +65,64 @@ export interface Post {
   mediaUrl: string | null;
   metrics: { views: number; likes: number; shares: number; comments: number } | null;
   createdAt: string;
+  externalId?: string;
+  externalUrl?: string;
+  publishError?: string;
+  publishAttempts?: number;
+  publishMethod?: "direct" | "buffer";
+}
+
+export interface PlatformCredentials {
+  accessToken: string;
+  refreshToken?: string;
+  pageId?: string;
+  accountId?: string;
+}
+
+export interface PublishResult {
+  success: boolean;
+  externalId?: string;
+  url?: string;
+  error?: string;
+  scheduledAt?: string;
+  platform?: string;
+}
+
+export interface PostStatus {
+  id: string;
+  status: "scheduled" | "published" | "failed" | "processing";
+  metrics?: { views: number; likes: number; shares: number; comments: number };
+  url?: string;
+}
+
+export interface PublishLog {
+  id: string;
+  postId: string;
+  platform: string;
+  action: "schedule" | "publish" | "check_status" | "error";
+  method: "direct" | "buffer" | "dry_run";
+  request?: object;
+  response?: object;
+  timestamp: string;
+  success: boolean;
+  error?: string;
+}
+
+export interface AppSettings {
+  claudeApiKey: string;
+  metaApiKey: string;
+  tiktokApiKey: string;
+  postingSchedule: Record<string, { times: string[]; platforms: string[] }>;
+  bufferApiKey?: string;
+  bufferProfileIds?: Record<string, string>;
+  metaPageId?: string;
+  metaIgUserId?: string;
+  tiktokOpenId?: string;
+  linkedinApiKey?: string;
+  youtubeApiKey?: string;
+  youtubeChannelId?: string;
+  publishMode: "direct" | "buffer" | "manual";
+  dryRun: boolean;
+  autoSchedule?: boolean;
+  optimizedTimes?: Record<string, string[]>;
 }

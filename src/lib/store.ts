@@ -1,4 +1,4 @@
-import { Brand, ContentPillar, ScriptTemplate, Script, Post } from "./types";
+import { Brand, ContentPillar, ScriptTemplate, Script, Post, PublishLog, AppSettings } from "./types";
 import { seedBrands, seedPillars, seedTemplates } from "./seed-data";
 import { sampleScripts } from "./sample-scripts";
 
@@ -10,6 +10,7 @@ const STORAGE_KEYS = {
   posts: "ce_posts",
   settings: "ce_settings",
   initialized: "ce_initialized",
+  publishLogs: "ce_publish_logs",
 } as const;
 
 function getItem<T>(key: string, fallback: T): T {
@@ -187,13 +188,8 @@ export const postStore = {
   },
 };
 
-// Settings
-export interface AppSettings {
-  claudeApiKey: string;
-  metaApiKey: string;
-  tiktokApiKey: string;
-  postingSchedule: Record<string, { times: string[]; platforms: string[] }>;
-}
+// Settings — uses AppSettings from types.ts
+export type { AppSettings } from "./types";
 
 const defaultSettings: AppSettings = {
   claudeApiKey: "",
@@ -208,6 +204,15 @@ const defaultSettings: AppSettings = {
     saturday: { times: ["10:00", "15:00"], platforms: ["instagram"] },
     sunday: { times: ["10:00", "15:00"], platforms: ["instagram"] },
   },
+  publishMode: "manual",
+  dryRun: true,
+  autoSchedule: false,
+  optimizedTimes: {
+    instagram: ["09:00", "12:00", "18:00", "21:00"],
+    tiktok: ["07:00", "12:00", "17:00", "21:00", "23:00"],
+    youtube: ["14:00", "17:00"],
+    linkedin: ["08:00", "12:00", "17:00"],
+  },
 };
 
 export const settingsStore = {
@@ -217,5 +222,25 @@ export const settingsStore = {
     const updated = { ...current, ...data };
     setItem(STORAGE_KEYS.settings, updated);
     return updated;
+  },
+};
+
+// Publish Log operations
+export const publishLogStore = {
+  getAll: (): PublishLog[] => getItem(STORAGE_KEYS.publishLogs, []),
+  getByPost: (postId: string): PublishLog[] =>
+    publishLogStore.getAll().filter((l) => l.postId === postId),
+  getRecent: (limit: number): PublishLog[] =>
+    publishLogStore.getAll()
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      .slice(0, limit),
+  add: (log: Omit<PublishLog, "id">): PublishLog => {
+    const entry: PublishLog = { ...log, id: `log_${generateId()}` };
+    const all = publishLogStore.getAll();
+    setItem(STORAGE_KEYS.publishLogs, [...all, entry]);
+    return entry;
+  },
+  clear: (): void => {
+    setItem(STORAGE_KEYS.publishLogs, []);
   },
 };
