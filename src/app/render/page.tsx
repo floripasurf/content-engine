@@ -5,8 +5,9 @@ import { brandStore, scriptStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import type { Brand, Script } from "@/lib/types";
 
-type TemplateId = "TextOnScreen" | "StockFootage" | "SplitScreen" | "Carousel";
+type TemplateId = "ViralReels" | "StoryMode" | "SplitComparison" | "TextOnScreen" | "StockFootage" | "SplitScreen" | "Carousel";
 type VoiceId = "pt-BR-AntonioNeural" | "pt-BR-FranciscaNeural" | "pt-BR-ThalitaNeural";
+type VoiceProviderId = "google" | "elevenlabs" | "edge-tts";
 
 interface RenderJob {
   id: string;
@@ -19,29 +20,53 @@ interface RenderJob {
 
 const templates: { id: TemplateId; label: string; description: string; icon: string }[] = [
   {
+    id: "ViralReels",
+    label: "Viral Reels",
+    description: "TikTok-style com captions animadas, transicoes rapidas e CTA final",
+    icon: "🔥",
+  },
+  {
+    id: "StoryMode",
+    label: "Story Mode",
+    description: "Narrativa com legendas, baloes WhatsApp e emocoes",
+    icon: "📖",
+  },
+  {
+    id: "SplitComparison",
+    label: "Antes / Depois",
+    description: "Problema vs. Solucao com divisor animado",
+    icon: "⚡",
+  },
+  {
     id: "TextOnScreen",
-    label: "Texto na Tela",
-    description: "Fundo escuro com texto animado e transicoes",
+    label: "Texto na Tela (legado)",
+    description: "Fundo escuro com texto animado",
     icon: "📝",
   },
   {
     id: "StockFootage",
-    label: "Stock Footage",
-    description: "Fundo com video/gradiente e texto em barra inferior",
+    label: "Stock Footage (legado)",
+    description: "Fundo gradiente com texto em barra inferior",
     icon: "🎥",
   },
   {
     id: "SplitScreen",
-    label: "Tela Dividida",
-    description: "Problema vs. Solucao, antes e depois",
-    icon: "⚡",
+    label: "Tela Dividida (legado)",
+    description: "Problema/Solucao basico",
+    icon: "🔲",
   },
   {
     id: "Carousel",
-    label: "Carrossel",
-    description: "Slides com efeito de deslizar, estilo Instagram",
+    label: "Carrossel (legado)",
+    description: "Slides estilo Instagram",
     icon: "📱",
   },
+];
+
+const voiceProviders: { id: VoiceProviderId; label: string; description: string }[] = [
+  { id: "google", label: "Google Neural (recomendado)", description: "Gratuito 1M chars/mes, qualidade boa" },
+  { id: "elevenlabs", label: "ElevenLabs (premium)", description: "Melhor qualidade, requer API key" },
+  { id: "edge-tts", label: "Edge TTS (basico)", description: "Gratuito, qualidade aceitavel" },
 ];
 
 const voices: { id: VoiceId; label: string; description: string }[] = [
@@ -54,7 +79,8 @@ export default function RenderPage() {
   const [brands, setBrands] = useState<Brand[]>([]);
   const [scripts, setScripts] = useState<Script[]>([]);
   const [selectedScriptId, setSelectedScriptId] = useState("");
-  const [selectedTemplate, setSelectedTemplate] = useState<TemplateId>("TextOnScreen");
+  const [selectedTemplate, setSelectedTemplate] = useState<TemplateId>("ViralReels");
+  const [selectedProvider, setSelectedProvider] = useState<VoiceProviderId>("edge-tts");
   const [selectedVoice, setSelectedVoice] = useState<VoiceId>("pt-BR-AntonioNeural");
   const [rendering, setRendering] = useState(false);
   const [currentJobId, setCurrentJobId] = useState<string | null>(null);
@@ -144,6 +170,7 @@ export default function RenderPage() {
           },
           template: selectedTemplate,
           voice: selectedVoice,
+          voiceProvider: selectedProvider,
         }),
       });
 
@@ -243,10 +270,34 @@ export default function RenderPage() {
             </div>
           </div>
 
+          {/* Voice provider selection */}
+          <div className="bg-surface border border-border rounded-xl p-5 space-y-4">
+            <h2 className="font-semibold text-sm uppercase tracking-wider text-muted">
+              3. Provedor de Voz
+            </h2>
+            <div className="grid grid-cols-3 gap-3">
+              {voiceProviders.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => setSelectedProvider(p.id)}
+                  className={cn(
+                    "p-4 rounded-xl border text-center transition-all",
+                    selectedProvider === p.id
+                      ? "border-accent bg-accent/10"
+                      : "border-border hover:border-border-hover"
+                  )}
+                >
+                  <p className="font-medium text-sm">{p.label}</p>
+                  <p className="text-xs text-muted mt-1">{p.description}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Voice selection */}
           <div className="bg-surface border border-border rounded-xl p-5 space-y-4">
             <h2 className="font-semibold text-sm uppercase tracking-wider text-muted">
-              3. Escolha a Voz
+              4. Escolha a Voz
             </h2>
             <div className="grid grid-cols-3 gap-3">
               {voices.map((v) => (
@@ -353,7 +404,7 @@ export default function RenderPage() {
               </div>
               <div className="flex justify-between">
                 <span>TTS</span>
-                <span>Microsoft Edge (gratis)</span>
+                <span>{voiceProviders.find((p) => p.id === selectedProvider)?.label ?? "Edge TTS"}</span>
               </div>
             </div>
           </div>

@@ -1,7 +1,6 @@
 import path from "path";
-import type { VoiceOption } from "@/lib/tts";
-
-type TemplateId = "TextOnScreen" | "StockFootage" | "SplitScreen" | "Carousel";
+import type { VoiceOption, VoiceProvider } from "@/lib/tts";
+import type { TemplateId } from "@/lib/video-renderer";
 
 export async function POST(request: Request) {
   try {
@@ -9,13 +8,15 @@ export async function POST(request: Request) {
     const {
       script,
       brand,
-      template = "TextOnScreen",
+      template = "ViralReels",
       voice = "pt-BR-AntonioNeural",
+      voiceProvider,
     } = body as {
       script: { hook: string; body: string; duration: number; title: string };
-      brand: { name: string; logoEmoji: string; colors: { primary: string; secondary: string } };
+      brand: { name: string; logoEmoji: string; colors: { primary: string; secondary: string }; slug?: string };
       template?: TemplateId;
       voice?: VoiceOption;
+      voiceProvider?: VoiceProvider;
     };
 
     if (!script?.hook || !script?.body) {
@@ -39,9 +40,13 @@ export async function POST(request: Request) {
 
     const jobId = await startRenderJob({
       script,
-      brand,
+      brand: {
+        ...brand,
+        slug: brand.slug || brand.name.toLowerCase().replace(/\s+/g, "-"),
+      },
       template,
       voice,
+      voiceProvider,
       outputDir,
     });
 

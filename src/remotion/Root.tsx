@@ -1,5 +1,9 @@
 import React from "react";
 import { Composition } from "remotion";
+import { ViralReels } from "./compositions/ViralReels";
+import { StoryMode } from "./compositions/StoryMode";
+import { SplitComparison } from "./compositions/SplitComparison";
+// Keep old compositions for backwards compat
 import { TextOnScreen } from "./compositions/TextOnScreen";
 import { StockFootage } from "./compositions/StockFootage";
 import { SplitScreen } from "./compositions/SplitScreen";
@@ -29,10 +33,53 @@ const defaultProps = {
 export const RemotionRoot: React.FC = () => {
   return (
     <>
+      {/* ---- NEW TEMPLATES ---- */}
+      <Composition
+        id="ViralReels"
+        component={ViralReels as React.FC<Record<string, unknown>>}
+        durationInFrames={30 * FPS}
+        fps={FPS}
+        width={WIDTH}
+        height={HEIGHT}
+        defaultProps={{
+          ...defaultProps,
+          audioSrc: undefined,
+          stockVideoPaths: [],
+        }}
+      />
+
+      <Composition
+        id="StoryMode"
+        component={StoryMode as React.FC<Record<string, unknown>>}
+        durationInFrames={30 * FPS}
+        fps={FPS}
+        width={WIDTH}
+        height={HEIGHT}
+        defaultProps={{
+          ...defaultProps,
+          audioSrc: undefined,
+          stockVideoPaths: [],
+        }}
+      />
+
+      <Composition
+        id="SplitComparison"
+        component={SplitComparison as React.FC<Record<string, unknown>>}
+        durationInFrames={30 * FPS}
+        fps={FPS}
+        width={WIDTH}
+        height={HEIGHT}
+        defaultProps={{
+          ...defaultProps,
+          audioSrc: undefined,
+          stockVideoPaths: [],
+        }}
+      />
+
+      {/* ---- LEGACY TEMPLATES (backwards compat) ---- */}
       <Composition
         id="TextOnScreen"
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        component={TextOnScreen as React.FC<any>}
+        component={TextOnScreen as React.FC<Record<string, unknown>>}
         durationInFrames={30 * FPS}
         fps={FPS}
         width={WIDTH}
@@ -45,8 +92,7 @@ export const RemotionRoot: React.FC = () => {
 
       <Composition
         id="StockFootage"
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        component={StockFootage as React.FC<any>}
+        component={StockFootage as React.FC<Record<string, unknown>>}
         durationInFrames={30 * FPS}
         fps={FPS}
         width={WIDTH}
@@ -60,8 +106,7 @@ export const RemotionRoot: React.FC = () => {
 
       <Composition
         id="SplitScreen"
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        component={SplitScreen as React.FC<any>}
+        component={SplitScreen as React.FC<Record<string, unknown>>}
         durationInFrames={30 * FPS}
         fps={FPS}
         width={WIDTH}
@@ -74,8 +119,7 @@ export const RemotionRoot: React.FC = () => {
 
       <Composition
         id="Carousel"
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        component={Carousel as React.FC<any>}
+        component={Carousel as React.FC<Record<string, unknown>>}
         durationInFrames={30 * FPS}
         fps={FPS}
         width={WIDTH}

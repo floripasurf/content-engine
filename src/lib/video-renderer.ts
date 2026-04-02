@@ -1,18 +1,27 @@
 import path from "path";
 import fs from "fs";
 import { parseScript, buildVoiceoverText } from "./script-parser";
-import { generateVoiceover, VoiceOption } from "./tts";
+import { generateVoiceover, VoiceOption, VoiceProvider } from "./tts";
 import { getJob, setJob, type RenderJob } from "./render-jobs";
 import type { Script, Brand } from "./types";
 import type { VideoScene } from "./script-parser";
 
-export type TemplateId = "TextOnScreen" | "StockFootage" | "SplitScreen" | "Carousel";
+export type TemplateId =
+  | "ViralReels"
+  | "StoryMode"
+  | "SplitComparison"
+  // Legacy
+  | "TextOnScreen"
+  | "StockFootage"
+  | "SplitScreen"
+  | "Carousel";
 
 export interface RenderJobInput {
   script: Pick<Script, "hook" | "body" | "duration" | "title">;
-  brand: Pick<Brand, "name" | "logoEmoji" | "colors">;
+  brand: Pick<Brand, "name" | "logoEmoji" | "colors" | "slug">;
   template: TemplateId;
   voice: VoiceOption;
+  voiceProvider?: VoiceProvider;
   outputDir: string;
 }
 
@@ -36,7 +45,6 @@ export async function startRenderJob(input: RenderJobInput): Promise<string> {
   };
   setJob(jobId, job);
 
-  // Run rendering in background (don't await)
   renderInBackground(jobId, input).catch((err) => {
     const j = getJob(jobId);
     if (j) {
@@ -56,9 +64,8 @@ async function renderInBackground(
   job.status = "rendering";
   job.progress = 0;
 
-  const { script, brand, template, voice, outputDir } = input;
+  const { script, brand, template, voice, voiceProvider, outputDir } = input;
 
-  // Ensure output directory exists
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
   }
@@ -71,18 +78,27 @@ async function renderInBackground(
     duration: script.duration,
   });
 
-  // 2. Generate TTS audio
+  // 2. Generate TTS audio FIRST (before bundling)
   job.progress = 10;
-  let audioPath: string | null = null;
+  const publicAudioDir = path.resolve(process.cwd(), "public/audio");
+  if (!fs.existsSync(publicAudioDir)) {
+    fs.mkdirSync(publicAudioDir, { recursive: true });
+  }
+
+  let audioFilename: string | null = null;
+  let audioOutputPath: string | null = null;
   try {
     const voText = buildVoiceoverText({ hook: script.hook, body: script.body });
-    const audioFile = path.join(outputDir, `${jobId}.mp3`);
-    const ttsResult = await generateVoiceover(voText, audioFile, voice);
-    audioPath = ttsResult.audioPath;
+    audioFilename = `${jobId}.mp3`;
+    const publicAudioPath = path.join(publicAudioDir, audioFilename);
+    await generateVoiceover(voText, publicAudioPath, voice, voiceProvider);
+    audioOutputPath = path.join(outputDir, audioFilename);
+    fs.copyFileSync(publicAudioPath, audioOutputPath);
   } catch (err) {
     console.warn("[render] TTS failed, continuing without audio:", err);
+    audioFilename = null;
   }
-  job.progress = 30;
+  job.progress = 25;
 
   // 3. Dynamic import to avoid Turbopack bundling these heavy Node.js packages
   const { bundle } = await import("@remotion/bundler");
@@ -94,22 +110,36 @@ async function renderInBackground(
     entryPoint,
     webpackOverride: (config) => config,
   });
+
+  // 5. Copy audio files into bundle directory so Remotion can serve them
+  if (audioFilename) {
+    const bundleAudioDir = path.join(bundleLocation, "audio");
+    if (!fs.existsSync(bundleAudioDir)) {
+      fs.mkdirSync(bundleAudioDir, { recursive: true });
+    }
+    const srcAudio = path.join(publicAudioDir, audioFilename);
+    if (fs.existsSync(srcAudio)) {
+      fs.copyFileSync(srcAudio, path.join(bundleAudioDir, audioFilename));
+    }
+  }
   job.progress = 50;
 
-  // 5. Calculate total duration
+  // 6. Calculate total duration
   const totalFrames = scenes.reduce((sum, s) => sum + s.duration, 0);
 
-  // 6. Select composition and render
-  const inputProps = {
+  // 7. Build input props — audioSrc baked into the composition
+  const inputProps: Record<string, unknown> = {
     scenes,
     brandEmoji: brand.logoEmoji,
     brandName: brand.name,
     accentColor: brand.colors.primary,
-    ...(template === "StockFootage"
-      ? { secondaryColor: brand.colors.secondary }
-      : {}),
-    audioSrc: undefined,
+    stockVideoPaths: [],
+    audioSrc: audioFilename ? `/audio/${audioFilename}` : undefined,
   };
+
+  if (template === "StockFootage") {
+    inputProps.secondaryColor = brand.colors.secondary;
+  }
 
   const composition = await selectComposition({
     serveUrl: bundleLocation,
@@ -140,7 +170,7 @@ async function renderInBackground(
   job.status = "complete";
   job.result = {
     videoPath: outputPath,
-    audioPath,
+    audioPath: audioOutputPath,
     durationSeconds: totalFrames / FPS,
   };
 }
