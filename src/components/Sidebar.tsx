@@ -10,6 +10,7 @@ const nav = [
   { href: "/generate", label: "Gerar Roteiros", icon: "✨" },
   { href: "/vault", label: "Banco de Roteiros", icon: "🗄️" },
   { href: "/render", label: "Gerar Vídeo", icon: "🎬" },
+  { href: "/carousels", label: "Carrosséis", icon: "🎨" },
   { href: "/queue", label: "Fila de Aprovação", icon: "📋" },
   { href: "/publishing", label: "Publicação", icon: "🚀" },
   { href: "/calendar", label: "Calendário", icon: "📅" },

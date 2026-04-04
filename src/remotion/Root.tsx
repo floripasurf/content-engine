@@ -8,6 +8,8 @@ import { TextOnScreen } from "./compositions/TextOnScreen";
 import { StockFootage } from "./compositions/StockFootage";
 import { SplitScreen } from "./compositions/SplitScreen";
 import { Carousel } from "./compositions/Carousel";
+import { CarouselSlide } from "./compositions/CarouselSlide";
+import type { CarouselSlideProps } from "./compositions/CarouselSlide";
 import type { VideoScene } from "../lib/script-parser";
 
 const FPS = 30;
@@ -125,6 +127,30 @@ export const RemotionRoot: React.FC = () => {
         width={WIDTH}
         height={HEIGHT}
         defaultProps={defaultProps}
+      />
+
+      {/* ---- CAROUSEL STILL (Instagram 1080x1350) ---- */}
+      <Composition
+        id="CarouselSlide"
+        component={CarouselSlide as React.FC}
+        durationInFrames={1}
+        fps={1}
+        width={1080}
+        height={1350}
+        defaultProps={{
+          slideIndex: 0,
+          totalSlides: 5,
+          title: "5 sinais de que o encanador vai te dar dor de cabeca",
+          slideContent: "5 sinais de que o encanador vai te dar dor de cabeca",
+          slideSubtext: "",
+          slideEmoji: "",
+          slideNumber: "",
+          brandName: "Chamei",
+          brandEmoji: "\uD83D\uDCDE",
+          accentColor: "#2563EB",
+          secondaryColor: "#1E40AF",
+          slideType: "cover" as const,
+        } satisfies CarouselSlideProps}
       />
     </>
   );
