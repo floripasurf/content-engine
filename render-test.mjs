@@ -17,119 +17,132 @@ const FPS = 30;
 const WIDTH = 1080;
 const HEIGHT = 1920;
 
-// 3 Chamei scripts — one per NEW template
+// 3 Chamei scripts — CHARACTER-DRIVEN mini-stories
 const scripts = [
   {
-    name: "chamei-dor-orcamento-fantasma",
+    name: "chamei-chuveiro-frio",
     template: "ViralReels",
-    hook: "Faz 3 dias que eu pedi um orçamento pra consertar minha torneira. TRÊS DIAS.",
-    body: `[TEXTO NA TELA: "Dia 1"]
-"Ah, vou mandar o orçamento hoje à noite!"
+    hook: "Carla entra no chuveiro confiante, liga a água e GRITA — saiu gelada.",
+    body: `[CENA 1 - mulher entrando no banheiro confiante]
+[TEXTO NA TELA: "Segunda-feira. 6h da manhã."]
 
 [CORTE]
-[TEXTO NA TELA: "Dia 2"]
-"Opa, desculpa, esqueci. Mando amanhã sem falta."
+[CENA 2 - mulher tomando banho frio, expressão de choque]
+"AAAAH!"
 
 [CORTE]
-[TEXTO NA TELA: "Dia 3"]
-Sem falta ele disse.
+[CENA 3 - chuveiro elétrico com fio queimado, faísca]
+[TEXTO NA TELA: "O chuveiro decidiu se aposentar 💀"]
 
 [CORTE]
-[TEXTO NA TELA: "Enquanto isso no Chamei..."]
-Baixei o Chamei. Em 10 MINUTOS recebi 3 orçamentos.
+[CENA 4 - mulher no escuro enrolada na toalha, digitando no celular]
+[TEXTO NA TELA: "Google: 47 resultados. Nenhum atende."]
 
-[TEXTO NA TELA: "Chamei — Orçamento de verdade, de profissional de verdade"]
-Enquanto o outro tá mandando sem falta, eu já agendei o serviço. Link na bio.`,
-    duration: 35,
+[CORTE]
+[CENA 5 - mulher irritada no telefone, chamada caindo]
+[TEXTO NA TELA: "Tentativa 1... 2... 5... 8..."]
+
+[CORTE]
+[CENA 6 - mulher esquentando água na panela no fogão]
+[TEXTO NA TELA: "Banho medieval em pleno 2026"]
+
+[CORTE]
+[CENA 7 - tela do app Chamei com notificação]
+[TEXTO NA TELA: "Não seja a Carla."]
+
+[CORTE]
+[TEXTO NA TELA: "Chamei. Eletricista no WhatsApp em 2 minutos. Link na bio. 👇"]`,
+    duration: 32,
+    sceneKeywords: ["woman turning on shower confident bathroom", "woman cold shower shocked screaming", "broken electric shower sparks wire", "woman wrapped towel phone dark bathroom frustrated", "woman angry phone call no answer", "woman heating water pot stove kitchen", "smartphone app notification success", "black screen white text call to action"],
   },
   {
-    name: "chamei-solucao-saga-indicacao",
+    name: "chamei-torneira-possuida",
+    template: "ViralReels",
+    hook: "Close na torneira da cozinha JORRANDO água sem controle. Roberto entra em pânico.",
+    body: `[CENA 1 - torneira de cozinha jorrando água forte]
+[TEXTO NA TELA: "Domingo. Almoço em família."]
+
+[CORTE]
+[CENA 2 - homem correndo até a pia apavorado, água espirra no rosto]
+"NÃO NÃO NÃO!"
+
+[CORTE]
+[CENA 3 - crianças rindo e brincando na água no chão da cozinha]
+[TEXTO NA TELA: "Pra eles é parque aquático 🏊"]
+
+[CORTE]
+[CENA 4 - homem molhado no telefone, mandando áudio desesperado]
+"Mãe, a senhora conhece algum encanador??"
+
+[CORTE]
+[CENA 5 - tela de WhatsApp com resposta da mãe]
+[TEXTO NA TELA: "'Pergunta pro seu tio que conhece um primo...'"]
+
+[CORTE]
+[CENA 6 - homem abrindo app no celular, digitando "encanador"]
+[TEXTO NA TELA: "Aí ele lembrou que existe tecnologia."]
+
+[CORTE]
+[CENA 7 - encanador chegando na porta com caixa de ferramentas]
+[TEXTO NA TELA: "37 minutos depois."]
+"Você é um ANJO."
+
+[CORTE]
+[CENA 8 - torneira novinha funcionando, família feliz]
+[TEXTO NA TELA: "Chamei. Profissional no WhatsApp em minutos. Grátis. 🔧"]`,
+    duration: 37,
+    sceneKeywords: ["kitchen faucet water burst spraying", "man trying fix kitchen sink water splashing panic", "kids playing water floor kitchen laughing", "man wet phone desperate voice message", "phone whatsapp audio message reply", "man smartphone searching app service", "plumber arriving door toolbox smiling professional", "new kitchen faucet working family happy clean"],
+  },
+  {
+    name: "chamei-vizinha-salvadora",
     template: "StoryMode",
-    hook: "Pergunta pra minha vizinha que ela conhece um eletricista — a MENTIRA.",
-    body: `[TEXTO NA TELA: "A saga da indicação boca a boca"]
-
-"Oi Dona Maria, a senhora tem contato de eletricista?"
-"Ai querida, tinha um... deixa eu procurar..."
+    hook: "Close numa rachadura enorme na parede. Dona Márcia já tentou de tudo.",
+    body: `[CENA 1 - parede rachada de cima a baixo, tinta descascando]
+[TEXTO NA TELA: "2 semanas com isso."]
 
 [CORTE]
-[TEXTO NA TELA: "2 horas depois"]
-"Achei! Mas acho que ele se aposentou."
+[CENA 2 - senhora olhando a parede preocupada]
+"Já pedi indicação pra todo mundo..."
 
 [CORTE]
-São 4 dias. A luz ainda tá piscando. Eu já perguntei pra 11 pessoas.
-
-[TEXTO NA TELA: "Chamei. 2 minutos. Sem novela."]
-Abri o app. Coloquei eletricista. Meu bairro.
-Três opções com avaliação, preço e disponibilidade.
-
-[TEXTO NA TELA: "Luz acesa. Sanidade mental restaurada."]
-Dona Maria, obrigada, mas agora eu tenho o Chamei. Link na bio.`,
-    duration: 40,
-  },
-  {
-    name: "chamei-social-proof-grupo-familia",
-    template: "ViralReels",
-    hook: "Pedi indicação de encanador no grupo da família. Olha no que deu.",
-    body: `[TEXTO NA TELA: "Eu só queria um encanador..."]
-Mandei no grupo da família: gente, alguém conhece um encanador bom?
+[CENA 3 - senhora no telefone, na padaria perguntando, no portão com vizinho]
+[TEXTO NA TELA: "Padeiro: 'não conheço'. Porteiro: 'vou ver'. Cunhada: 'deixa eu perguntar'..."]
 
 [CORTE]
-Tia Márcia mandou o número de um cara que fez o serviço em 2014.
-[TEXTO NA TELA: "2014, gente."]
+[CENA 4 - senhora sentada no sofá derrotada]
+[TEXTO NA TELA: "Dia 14. Zero pedreiros. Rachadura crescendo."]
 
 [CORTE]
-Primo mandou áudio de 4 minutos contando uma história que nada a ver.
-[TEXTO NA TELA: "4 minutos de áudio"]
+[CENA 5 - vizinha jovem aparece na porta sorrindo com celular]
+"Dona Márcia! Ainda tá procurando pedreiro?"
 
 [CORTE]
-Minha mãe mandou: reza pra Santo Expedito filho.
+[CENA 6 - vizinha mostrando celular pra Dona Márcia]
+[TEXTO NA TELA: "'Usa o Chamei. Achei o meu em 5 minutos.'"]
+"Mas é de graça mesmo, filha?"
 
-[TEXTO NA TELA: "Aí eu abri o Chamei"]
-Profissional com 127 avaliações. Veio no mesmo dia. Resolveu em 2 horas.
+[CORTE]
+[CENA 7 - pedreiro trabalhando na parede, passando massa]
+[TEXTO NA TELA: "No dia seguinte."]
 
-[TEXTO NA TELA: "127 avaliações reais"]
-Agora quando alguém pede indicação no grupo, EU mando: baixa o Chamei. Link na bio.`,
-    duration: 40,
+[CORTE]
+[CENA 8 - parede lisa e pintada, Dona Márcia sorrindo]
+[TEXTO NA TELA: "Chamei. Indicação boa é a que funciona. Link na bio. 👇"]`,
+    duration: 38,
+    sceneKeywords: ["cracked wall peeling paint house interior", "worried elderly woman looking at wall arms crossed", "senior woman asking neighbors phone bakery", "tired woman sitting sofa defeated looking wall", "young woman neighbor doorbell smiling phone hand", "two women looking at smartphone screen together", "mason worker repairing wall plastering construction", "smooth painted white wall woman smiling touching satisfied"],
   },
 ];
 
 const brand = {
   name: "Chamei",
+  slug: "chamei",
   logoEmoji: "📞",
   colors: { primary: "#2563EB", secondary: "#1E40AF" },
 };
 
-async function generateTTS(text, outputPath) {
-  try {
-    const cleanText = text
-      .replace(/\[TEXTO\s*NA\s*TELA:\s*"[^"]+"\]/gi, "")
-      .replace(/\[CORTE\]/gi, "")
-      .replace(/\[TRANSI[ÇC][AÃ]O\]/gi, "")
-      .replace(/\s{2,}/g, " ")
-      .trim();
-
-    await execFileAsync(
-      "python3",
-      [
-        "-m",
-        "edge_tts",
-        "--voice",
-        "pt-BR-AntonioNeural",
-        "--text",
-        cleanText,
-        "--write-media",
-        outputPath,
-      ],
-      { timeout: 60000 }
-    );
-
-    console.log(`  TTS generated: ${outputPath}`);
-    return outputPath;
-  } catch (err) {
-    console.warn("  TTS failed:", err.message);
-    return null;
-  }
-}
+// Import the REAL voiceover builder and TTS from lib
+const { buildVoiceoverText } = await import("./src/lib/script-parser.ts");
+const { generateVoiceover } = await import("./src/lib/tts.ts");
 
 async function main() {
   // Ensure output directories
@@ -152,10 +165,12 @@ async function main() {
     const publicAudioPath = path.join(PUBLIC_AUDIO_DIR, audioFilename);
     console.log(`  [${script.name}] Generating voiceover...`);
 
-    const result = await generateTTS(
-      `${script.hook} ${script.body}`,
-      publicAudioPath
-    );
+    // Extract ONLY dialogue (no scene descriptions)
+    const dialogueText = buildVoiceoverText({ hook: script.hook, body: script.body });
+    console.log(`  [${script.name}] Dialogue: "${dialogueText}"`);
+
+    const ttsResult = await generateVoiceover(dialogueText, publicAudioPath);
+    const result = ttsResult?.audioPath;
 
     if (result && fs.existsSync(result)) {
       // Also copy to output dir
@@ -170,7 +185,26 @@ async function main() {
   }
 
   // ============================================================
-  // STEP 2: Bundle, then copy audio files into bundle dir
+  // STEP 2: Fetch stock footage for each script
+  // ============================================================
+  console.log("\nFetching stock footage from Pexels...\n");
+  const stockMap = new Map(); // script name -> array of local video paths
+
+  for (const script of scripts) {
+    console.log(`  [${script.name}] Searching for relevant footage...`);
+    const { fetchStockByKeywords } = await import("./src/lib/stock-footage.ts");
+    // Use scene-specific keywords if available, otherwise fallback
+    const stockVideos = await fetchStockByKeywords(
+      script.sceneKeywords || [],
+      `/tmp/content-engine-stock/${script.name}`
+    );
+    const paths = stockVideos.map(v => v.localPath);
+    stockMap.set(script.name, paths);
+    console.log(`  [${script.name}] Got ${paths.length} stock clips`);
+  }
+
+  // ============================================================
+  // STEP 3: Bundle, then copy audio + stock into bundle dir
   // ============================================================
   console.log("\nBundling Remotion project...");
   const entryPoint = path.resolve("src/remotion/index.ts");
@@ -179,7 +213,7 @@ async function main() {
     webpackOverride: (c) => c,
   });
 
-  // Copy audio files into the bundle directory so Remotion can serve them
+  // Copy audio files into the bundle directory
   const bundleAudioDir = path.join(bundleLocation, "audio");
   if (!fs.existsSync(bundleAudioDir)) {
     fs.mkdirSync(bundleAudioDir, { recursive: true });
@@ -191,10 +225,26 @@ async function main() {
     );
     console.log(`  Copied audio to bundle: ${file}`);
   }
+
+  // Copy stock videos into bundle directory
+  const bundleStockDir = path.join(bundleLocation, "stock");
+  if (!fs.existsSync(bundleStockDir)) {
+    fs.mkdirSync(bundleStockDir, { recursive: true });
+  }
+  const stockPathMap = new Map(); // old path -> bundle-relative path
+  for (const [scriptName, paths] of stockMap.entries()) {
+    for (let i = 0; i < paths.length; i++) {
+      const filename = `${scriptName}_${i}.mp4`;
+      const bundlePath = path.join(bundleStockDir, filename);
+      fs.copyFileSync(paths[i], bundlePath);
+      stockPathMap.set(paths[i], `/stock/${filename}`);
+      console.log(`  Copied stock to bundle: ${filename}`);
+    }
+  }
   console.log("Bundle ready.\n");
 
   // ============================================================
-  // STEP 3: Render each video
+  // STEP 4: Render each video
   // ============================================================
   for (const script of scripts) {
     console.log(
@@ -210,6 +260,8 @@ async function main() {
     console.log(`  Parsed ${scenes.length} scenes`);
 
     const audioSrc = audioMap.get(script.name);
+    const rawStockPaths = stockMap.get(script.name) || [];
+    const stockVideoPaths = rawStockPaths.map(p => stockPathMap.get(p)).filter(Boolean);
 
     // 2. Calculate frames
     const totalFrames = scenes.reduce((sum, s) => sum + s.duration, 0);
@@ -217,6 +269,7 @@ async function main() {
       `  Total frames: ${totalFrames} (${(totalFrames / FPS).toFixed(1)}s)`
     );
     console.log(`  Audio: ${audioSrc || "none"}`);
+    console.log(`  Stock clips: ${stockVideoPaths.length}`);
 
     // 3. Build input props
     const inputProps = {
@@ -225,7 +278,7 @@ async function main() {
       brandName: brand.name,
       accentColor: brand.colors.primary,
       secondaryColor: brand.colors.secondary,
-      stockVideoPaths: [], // Animated gradient fallback (no Pexels API key)
+      stockVideoPaths,
       audioSrc,
     };
 

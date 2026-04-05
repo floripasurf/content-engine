@@ -79,16 +79,19 @@ async function generateElevenLabs(
   const apiKey = process.env.ELEVENLABS_API_KEY;
   if (!apiKey) throw new Error("ELEVENLABS_API_KEY not set");
 
-  // pNInz6obpgDQGcFmaJgB = Adam (multilingual)
-  const voiceId = "pNInz6obpgDQGcFmaJgB";
+  // Use "George" voice — warmer, more natural for storytelling
+  // Alternative voices: pNInz6obpgDQGcFmaJgB (Adam), JBFqnCBsd6RMkjVDRZzb (George)
+  const voiceId = "JBFqnCBsd6RMkjVDRZzb";
   const url = `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`;
 
   const body = JSON.stringify({
     text,
     model_id: "eleven_multilingual_v2",
     voice_settings: {
-      stability: 0.5,
-      similarity_boost: 0.75,
+      stability: 0.3,          // Lower = more expressive/natural
+      similarity_boost: 0.85,  // Higher = more consistent
+      style: 0.4,              // Add some style/emotion
+      use_speaker_boost: true,
     },
   });
 

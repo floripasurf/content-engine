@@ -6,10 +6,11 @@ export interface VideoScene {
 }
 
 const FPS = 30;
-const MIN_SCENE_FRAMES = Math.round(1.5 * FPS); // 1.5 seconds
-const WORDS_PER_SECOND = 3;
-const CUT_FRAMES = 3;
-const TRANSITION_FRAMES = 15;
+const MIN_SCENE_FRAMES = Math.round(0.8 * FPS); // 0.8 seconds min
+const MAX_SCENE_FRAMES = Math.round(2.0 * FPS); // 2 seconds MAX — viral pace
+const WORDS_PER_SECOND = 5; // Fast read for viral content
+const CUT_FRAMES = 2; // Instant cuts
+const TRANSITION_FRAMES = 8; // Quick transitions
 
 // Markers in our script format
 const TEXTO_RE = /\[TEXTO\s*NA\s*TELA:\s*"([^"]+)"\]/gi;
@@ -19,8 +20,9 @@ const CTA_MARKERS = ["link na bio", "comenta aqui", "salva esse", "segue a gente
 
 function estimateFrames(text: string): number {
   const words = text.trim().split(/\s+/).length;
-  const seconds = Math.max(words / WORDS_PER_SECOND, 1.5);
-  return Math.round(seconds * FPS);
+  const seconds = Math.max(words / WORDS_PER_SECOND, 0.8);
+  // Cap at 2 seconds for viral pacing
+  return Math.min(Math.round(seconds * FPS), MAX_SCENE_FRAMES);
 }
 
 export function parseScript(script: {
@@ -31,66 +33,96 @@ export function parseScript(script: {
   const scenes: VideoScene[] = [];
   const totalFrames = script.duration * FPS;
 
-  // 1. Hook scene (first thing shown)
+  // 1. Hook scene (first thing shown — punchy, max 2s)
   scenes.push({
     type: "hook",
     text: script.hook.trim(),
-    duration: Math.max(estimateFrames(script.hook), 3 * FPS), // at least 3 seconds
+    duration: Math.min(estimateFrames(script.hook), MAX_SCENE_FRAMES),
     style: "large",
   });
 
-  // 2. Parse body into segments
-  const body = script.body.trim();
-  // Split body by markers while keeping them
-  const segments = body.split(/(\[TEXTO\s*NA\s*TELA:\s*"[^"]+"\]|\[CORTE\]|\[TRANSI[ÇC][AÃ]O\])/gi).filter(Boolean);
+  // 2. Parse body line by line
+  const lines = script.body.trim().split("\n");
 
-  for (const segment of segments) {
-    const trimmed = segment.trim();
+  for (const line of lines) {
+    const trimmed = line.trim();
     if (!trimmed) continue;
 
-    // Check for [TEXTO NA TELA: "..."]
+    // --- SKIP visual-only directions (no caption/subtitle) ---
+
+    // [CENA X - description] → visual cut, no text shown
+    if (/^\[CENA\s/i.test(trimmed)) {
+      scenes.push({ type: "cut", text: "", duration: CUT_FRAMES });
+      continue;
+    }
+
+    // *action description* → silent visual, no text
+    if (/^\*.*\*$/.test(trimmed)) {
+      continue;
+    }
+
+    // Any other [BRACKET ONLY] direction → skip
+    if (/^\[(?!TEXTO).+\]$/i.test(trimmed)) {
+      continue;
+    }
+
+    // --- KEEP these as visual elements ---
+
+    // [TEXTO NA TELA: "..."] → on-screen text overlay
     const textoMatch = trimmed.match(/\[TEXTO\s*NA\s*TELA:\s*"([^"]+)"\]/i);
     if (textoMatch) {
       scenes.push({
         type: "text_on_screen",
         text: textoMatch[1],
-        duration: Math.max(estimateFrames(textoMatch[1]), 2 * FPS),
+        duration: Math.min(estimateFrames(textoMatch[1]), MAX_SCENE_FRAMES),
         style: "large",
       });
       continue;
     }
 
-    // Check for [CORTE]
+    // [CORTE]
     if (CORTE_RE.test(trimmed)) {
       CORTE_RE.lastIndex = 0;
       scenes.push({ type: "cut", text: "", duration: CUT_FRAMES });
       continue;
     }
 
-    // Check for [TRANSICAO]
+    // [TRANSICAO]
     if (TRANSICAO_RE.test(trimmed)) {
       TRANSICAO_RE.lastIndex = 0;
       scenes.push({ type: "transition", text: "", duration: TRANSITION_FRAMES });
       continue;
     }
 
-    // Check if this is a CTA segment
-    const isCta = CTA_MARKERS.some((m) => trimmed.toLowerCase().includes(m));
+    // --- DIALOGUE: Clean and show as caption ---
+
+    // Strip inline actions and brackets, keep only spoken text
+    let spoken = trimmed
+      .replace(/^\*.*?\*\s*/, "")    // Remove leading *action*
+      .replace(/\*.*?\*/g, "")       // Remove inline *actions*
+      .replace(/\[.*?\]/g, "")       // Remove inline [directions]
+      .replace(/^[""]|[""]$/g, "")   // Remove surrounding quotes
+      .trim();
+
+    if (!spoken || spoken.length < 2) continue;
+
+    // Check if CTA
+    const isCta = CTA_MARKERS.some((m) => spoken.toLowerCase().includes(m));
     if (isCta) {
       scenes.push({
         type: "cta",
-        text: trimmed,
-        duration: Math.max(estimateFrames(trimmed), 3 * FPS),
+        text: spoken,
+        duration: Math.min(estimateFrames(spoken), MAX_SCENE_FRAMES),
         style: "emphasis",
       });
       continue;
     }
 
-    // Regular narration
+    // Regular spoken dialogue → caption
     scenes.push({
       type: "narration",
-      text: trimmed,
-      duration: estimateFrames(trimmed),
+      text: spoken,
+      duration: estimateFrames(spoken),
       style: "normal",
     });
   }
@@ -118,13 +150,77 @@ export function parseScript(script: {
   return scenes;
 }
 
-/** Build a flat voiceover text from the script (strips markers). */
-export function buildVoiceoverText(script: { hook: string; body: string }): string {
-  const body = script.body
-    .replace(TEXTO_RE, "")
-    .replace(CORTE_RE, "")
-    .replace(TRANSICAO_RE, "")
-    .replace(/\s{2,}/g, " ")
+/**
+ * Detect if a line is a visual/camera direction vs spoken dialogue.
+ * Visual directions describe what the CAMERA sees, not what someone SAYS.
+ */
+function isVisualDirection(text: string): boolean {
+  const lower = text.toLowerCase();
+
+  // Explicit markers
+  if (/^\[/.test(text)) return true;           // [anything]
+  if (/^\*.*\*$/.test(text)) return true;      // *action*
+
+  // Camera/scene language patterns
+  const directionPatterns = [
+    /^close\s/i,                                // "Close na torneira", "Close do rosto", "Close numa rachadura"
+    /^(plano|zoom|pan|tilt|corta?)\s/i,        // Camera movements
+    /^(cena|take|shot)\s/i,                     // Scene markers
+    /^(fade|flash|black|tela)\s/i,             // Transitions
+    /\b(entra|sai|corre|pega|abre|liga|olha|senta)\s+(n[ao]|em|no|na|pelo|pra|pro|o |a )/i, // Action descriptions: "entra no banheiro", "liga a água"
+    /^(pessoa|mulher|homem|criança|senhora|carla|roberto|márcia|dona)\s+(sentad|olhand|corren|entran|no |na |em |de |entra|liga|pega|abre)/i, // "Carla entra no chuveiro"
+    /^(torneira|parede|chuveiro|luz|porta|tela)\s/i, // Objects as subjects
+    /(ao fundo|em primeiro plano|na tela)/i,    // Composition directions
+    /^montagem\s/i,                             // "montagem rápida"
+  ];
+
+  return directionPatterns.some((p) => p.test(lower));
+}
+
+/**
+ * Extract ONLY spoken dialogue from a line.
+ * Returns null if the line has no spoken content.
+ */
+function extractDialogue(text: string): string | null {
+  let cleaned = text
+    .replace(/^\*.*?\*\s*/, "")    // Remove leading *action*
+    .replace(/\*.*?\*/g, "")       // Remove inline *actions*
+    .replace(/\[.*?\]/g, "")       // Remove [directions]
+    .replace(/^[""]|[""]$/g, "")   // Remove surrounding quotes
     .trim();
-  return `${script.hook.trim()} ${body}`;
+
+  if (!cleaned || cleaned.length < 2) return null;
+  if (isVisualDirection(cleaned)) return null;
+
+  return cleaned;
+}
+
+/**
+ * Build voiceover text — STRICTLY only spoken dialogue.
+ * No scene descriptions, no camera directions, no action lines.
+ */
+export function buildVoiceoverText(script: { hook: string; body: string }): string {
+  const spokenLines: string[] = [];
+
+  // Process hook — split into sentences, keep only dialogue parts
+  const hookSentences = script.hook.split(/(?<=[.!?])\s+/);
+  for (const sentence of hookSentences) {
+    const dialogue = extractDialogue(sentence.trim());
+    if (dialogue) {
+      spokenLines.push(dialogue);
+    }
+  }
+
+  // Process body line by line
+  for (const line of script.body.split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+
+    const dialogue = extractDialogue(trimmed);
+    if (dialogue) {
+      spokenLines.push(dialogue);
+    }
+  }
+
+  return spokenLines.join(". ");
 }
