@@ -108,6 +108,19 @@ export interface PublishLog {
   error?: string;
 }
 
+export interface CanvaBrandTemplates {
+  coverTemplateId: string;
+  contentTemplateId: string;
+  comparisonTemplateId: string;
+  checklistTemplateId: string;
+  ctaTemplateId: string;
+}
+
+export interface CanvaSettings {
+  canvaAccessToken?: string;
+  brandTemplates: Record<string, CanvaBrandTemplates>;
+}
+
 export interface AppSettings {
   claudeApiKey: string;
   metaApiKey: string;
@@ -125,4 +138,5 @@ export interface AppSettings {
   dryRun: boolean;
   autoSchedule?: boolean;
   optimizedTimes?: Record<string, string[]>;
+  canva?: CanvaSettings;
 }

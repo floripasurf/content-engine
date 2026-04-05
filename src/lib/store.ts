@@ -207,6 +207,10 @@ const defaultSettings: AppSettings = {
   publishMode: "manual",
   dryRun: true,
   autoSchedule: false,
+  canva: {
+    canvaAccessToken: "",
+    brandTemplates: {},
+  },
   optimizedTimes: {
     instagram: ["09:00", "12:00", "18:00", "21:00"],
     tiktok: ["07:00", "12:00", "17:00", "21:00", "23:00"],

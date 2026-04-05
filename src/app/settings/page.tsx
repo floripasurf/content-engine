@@ -3,7 +3,16 @@
 import { useEffect, useState, useCallback } from "react";
 import { settingsStore } from "@/lib/store";
 import type { AppSettings } from "@/lib/types";
+import type { CanvaBrandTemplates } from "@/lib/types";
 import { cn, platformIcons, platformNames, platformColors } from "@/lib/utils";
+
+const canvaTemplateFields: Array<{ key: keyof CanvaBrandTemplates; label: string }> = [
+  { key: "coverTemplateId", label: "Cover (Capa)" },
+  { key: "contentTemplateId", label: "Content (Conteudo)" },
+  { key: "comparisonTemplateId", label: "Comparison (Comparacao)" },
+  { key: "checklistTemplateId", label: "Checklist" },
+  { key: "ctaTemplateId", label: "CTA" },
+];
 
 const days = [
   { key: "monday", label: "Segunda" },
@@ -28,6 +37,9 @@ export default function SettingsPage() {
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [saved, setSaved] = useState(false);
   const [testResults, setTestResults] = useState<Record<string, "loading" | "success" | "error">>({});
+  const [canvaBrand, setCanvaBrand] = useState("chamei");
+  const [canvaTemplates, setCanvaTemplates] = useState<Array<{ id: string; name: string; thumbnail_url: string }>>([]);
+  const [canvaFetching, setCanvaFetching] = useState(false);
 
   useEffect(() => {
     setSettings(settingsStore.get());
@@ -55,6 +67,58 @@ export default function SettingsPage() {
       setTestResults((prev) => ({ ...prev, [platform]: "error" }));
     }
     setTimeout(() => setTestResults((prev) => ({ ...prev, [platform]: undefined as unknown as "loading" })), 3000);
+  };
+
+  const handleCanvaTest = async () => {
+    if (!settings) return;
+    setTestResults((prev) => ({ ...prev, canva: "loading" }));
+    try {
+      const res = await fetch("/api/canva", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "test", token: settings.canva?.canvaAccessToken }),
+      });
+      const data = await res.json();
+      setTestResults((prev) => ({ ...prev, canva: data.connected ? "success" : "error" }));
+    } catch {
+      setTestResults((prev) => ({ ...prev, canva: "error" }));
+    }
+    setTimeout(() => setTestResults((prev) => ({ ...prev, canva: undefined as unknown as "loading" })), 3000);
+  };
+
+  const handleFetchCanvaTemplates = async () => {
+    if (!settings?.canva?.canvaAccessToken) return;
+    setCanvaFetching(true);
+    try {
+      const res = await fetch(`/api/canva?token=${encodeURIComponent(settings.canva.canvaAccessToken)}`);
+      const data = await res.json();
+      setCanvaTemplates(data.templates || []);
+    } catch {
+      setCanvaTemplates([]);
+    }
+    setCanvaFetching(false);
+  };
+
+  const updateCanvaBrandTemplate = (field: keyof CanvaBrandTemplates, value: string) => {
+    if (!settings) return;
+    const current = settings.canva || { canvaAccessToken: "", brandTemplates: {} };
+    const brandTpl = current.brandTemplates[canvaBrand] || {
+      coverTemplateId: "",
+      contentTemplateId: "",
+      comparisonTemplateId: "",
+      checklistTemplateId: "",
+      ctaTemplateId: "",
+    };
+    setSettings({
+      ...settings,
+      canva: {
+        ...current,
+        brandTemplates: {
+          ...current.brandTemplates,
+          [canvaBrand]: { ...brandTpl, [field]: value },
+        },
+      },
+    });
   };
 
   if (!settings) return null;
@@ -435,6 +499,177 @@ export default function SettingsPage() {
             );
           })}
         </div>
+      </div>
+
+      {/* Canva Integration */}
+      <div className="bg-surface border border-border rounded-xl p-6">
+        <h2 className="font-semibold text-lg mb-4">Canva Integration</h2>
+        <p className="text-xs text-muted mb-4">
+          Conecte ao Canva para gerar carrosseis profissionais com seus brand templates.
+        </p>
+
+        {/* Access Token */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium mb-1">Canva Access Token</label>
+          <p className="text-xs text-muted mb-2">
+            Obtenha em{" "}
+            <a href="https://www.canva.dev/docs/connect/" target="_blank" rel="noopener noreferrer" className="text-accent underline">
+              canva.dev/docs/connect
+            </a>
+          </p>
+          <div className="flex gap-2">
+            <input
+              type="password"
+              value={settings.canva?.canvaAccessToken || ""}
+              onChange={(e) =>
+                setSettings({
+                  ...settings,
+                  canva: {
+                    ...(settings.canva || { brandTemplates: {} }),
+                    canvaAccessToken: e.target.value,
+                  },
+                })
+              }
+              placeholder="cnv_..."
+              className="flex-1 bg-background border border-border rounded-lg p-2.5 text-sm text-foreground placeholder:text-muted/50 focus:outline-none focus:border-accent"
+            />
+            <button
+              onClick={handleCanvaTest}
+              className="px-4 py-2 bg-accent/20 text-accent rounded-lg text-sm hover:bg-accent/30 transition-colors"
+            >
+              {testResults["canva"] === "loading"
+                ? "..."
+                : testResults["canva"] === "success"
+                  ? "Conectado!"
+                  : testResults["canva"] === "error"
+                    ? "Falhou"
+                    : "Testar Conexao"}
+            </button>
+          </div>
+        </div>
+
+        {/* Template Mapping */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium mb-2">Templates por Marca</label>
+          <div className="flex gap-2 mb-3">
+            {["chamei", "squad"].map((slug) => (
+              <button
+                key={slug}
+                onClick={() => setCanvaBrand(slug)}
+                className={cn(
+                  "px-3 py-1.5 rounded-lg text-sm font-medium transition-all",
+                  canvaBrand === slug
+                    ? "bg-accent text-white"
+                    : "bg-background text-muted hover:text-foreground border border-border",
+                )}
+              >
+                {slug === "chamei" ? "Chamei" : "Squad"}
+              </button>
+            ))}
+          </div>
+
+          <div className="space-y-2 p-4 bg-background rounded-lg border border-border">
+            {canvaTemplateFields.map((field) => {
+              const val =
+                settings.canva?.brandTemplates?.[canvaBrand]?.[field.key] || "";
+              return (
+                <div key={field.key} className="flex items-center gap-3">
+                  <span className="text-xs text-muted w-40 flex-shrink-0">
+                    {field.label}
+                  </span>
+                  <input
+                    type="text"
+                    value={val}
+                    onChange={(e) => updateCanvaBrandTemplate(field.key, e.target.value)}
+                    placeholder="Template ID do Canva..."
+                    className="flex-1 bg-surface border border-border rounded p-1.5 text-sm text-foreground placeholder:text-muted/50 focus:outline-none focus:border-accent"
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Fetch Templates */}
+        <div className="mb-4">
+          <button
+            onClick={handleFetchCanvaTemplates}
+            disabled={!settings.canva?.canvaAccessToken || canvaFetching}
+            className="px-4 py-2 bg-accent/20 text-accent rounded-lg text-sm hover:bg-accent/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {canvaFetching ? "Buscando..." : "Buscar Templates do Canva"}
+          </button>
+          {canvaTemplates.length > 0 && (
+            <div className="mt-3 max-h-48 overflow-y-auto space-y-1 p-3 bg-background rounded-lg border border-border">
+              <p className="text-xs text-muted mb-2">
+                {canvaTemplates.length} templates encontrados — copie o ID e cole acima:
+              </p>
+              {canvaTemplates.map((tpl) => (
+                <div
+                  key={tpl.id}
+                  className="flex items-center gap-2 text-xs p-1.5 hover:bg-surface rounded"
+                >
+                  {tpl.thumbnail_url && (
+                    <img
+                      src={tpl.thumbnail_url}
+                      alt={tpl.name}
+                      className="w-8 h-8 rounded object-cover flex-shrink-0"
+                    />
+                  )}
+                  <span className="flex-1 truncate">{tpl.name}</span>
+                  <code className="text-accent bg-surface px-1.5 py-0.5 rounded text-[10px] flex-shrink-0">
+                    {tpl.id}
+                  </code>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Template Guide */}
+        <details className="text-xs text-muted">
+          <summary className="cursor-pointer text-sm font-medium text-foreground mb-2">
+            Guia de Templates
+          </summary>
+          <div className="space-y-2 p-3 bg-background rounded-lg border border-border">
+            <p>Como configurar templates no Canva:</p>
+            <ol className="list-decimal list-inside space-y-1">
+              <li>Abra canva.com e crie um design 1080x1350 (Post Instagram)</li>
+              <li>
+                Crie o template com a identidade visual da marca:
+                <br />
+                — Logo no topo ou canto
+                <br />
+                — Cores da marca como fundo/acentos
+                <br />
+                — Fonte da marca
+                <br />
+                — Elementos visuais consistentes
+              </li>
+              <li>
+                Adicione campos de texto com nomes especificos:
+                <br />
+                <code className="bg-surface px-1 rounded">{"{{title}}"}</code> — Titulo principal
+                <br />
+                <code className="bg-surface px-1 rounded">{"{{subtitle}}"}</code> — Subtexto
+                <br />
+                <code className="bg-surface px-1 rounded">{"{{number}}"}</code> — Numero do slide (01, 02...)
+                <br />
+                <code className="bg-surface px-1 rounded">{"{{brand_name}}"}</code> — Nome da marca
+              </li>
+              <li>Salve como Brand Template</li>
+              <li>Copie o Template ID e cole nas configuracoes acima</li>
+            </ol>
+            <p className="mt-2 font-medium">Crie 5 templates por marca:</p>
+            <ul className="list-disc list-inside space-y-0.5">
+              <li>Cover — fundo colorido, titulo grande</li>
+              <li>Content — fundo claro, numero + texto</li>
+              <li>Comparison — dividido em dois, X vs check</li>
+              <li>Checklist — lista com checkmarks</li>
+              <li>CTA — fundo colorido, call to action</li>
+            </ul>
+          </div>
+        </details>
       </div>
 
       {/* Team Members Placeholder */}
