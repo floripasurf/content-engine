@@ -8,6 +8,16 @@ import type { Brand, Script } from "@/lib/types";
 type TemplateId = "ViralReels" | "StoryMode" | "SplitComparison" | "TextOnScreen" | "StockFootage" | "SplitScreen" | "Carousel";
 type VoiceId = "pt-BR-AntonioNeural" | "pt-BR-FranciscaNeural" | "pt-BR-ThalitaNeural";
 type VoiceProviderId = "google" | "elevenlabs" | "edge-tts";
+type VideoSourceId = "pexels" | "minimax" | "none";
+
+interface AIVideoJob {
+  id: string;
+  status: "queued" | "generating" | "complete" | "error";
+  progress: number;
+  totalScenes: number;
+  scenes: Array<{ index: number; status: string; prompt?: string }>;
+  error?: string;
+}
 
 interface RenderJob {
   id: string;
@@ -63,6 +73,12 @@ const templates: { id: TemplateId; label: string; description: string; icon: str
   },
 ];
 
+const videoSources: { id: VideoSourceId; label: string; description: string; icon: string; cost?: string }[] = [
+  { id: "pexels", label: "Stock Footage (Pexels)", description: "Videos genericos de banco de imagem", icon: "🎬", cost: "Gratis" },
+  { id: "minimax", label: "AI Video (Minimax)", description: "Cenas geradas por IA que batem com o roteiro", icon: "🤖", cost: "~$0.33/cena" },
+  { id: "none", label: "Sem fundo (gradiente)", description: "Fundo animado com gradiente da marca", icon: "🎨", cost: "Gratis" },
+];
+
 const voiceProviders: { id: VoiceProviderId; label: string; description: string }[] = [
   { id: "google", label: "Google Neural (recomendado)", description: "Gratuito 1M chars/mes, qualidade boa" },
   { id: "elevenlabs", label: "ElevenLabs (premium)", description: "Melhor qualidade, requer API key" },
@@ -82,6 +98,9 @@ export default function RenderPage() {
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateId>("ViralReels");
   const [selectedProvider, setSelectedProvider] = useState<VoiceProviderId>("edge-tts");
   const [selectedVoice, setSelectedVoice] = useState<VoiceId>("pt-BR-AntonioNeural");
+  const [selectedVideoSource, setSelectedVideoSource] = useState<VideoSourceId>("none");
+  const [aiVideoJob, setAiVideoJob] = useState<AIVideoJob | null>(null);
+  const [aiVideoJobId, setAiVideoJobId] = useState<string | null>(null);
   const [rendering, setRendering] = useState(false);
   const [currentJobId, setCurrentJobId] = useState<string | null>(null);
   const [currentJob, setCurrentJob] = useState<RenderJob | null>(null);
@@ -125,6 +144,24 @@ export default function RenderPage() {
 
     return () => clearInterval(interval);
   }, [currentJobId]);
+
+  // Poll AI video job status
+  useEffect(() => {
+    if (!aiVideoJobId) return;
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/ai-video?jobId=${aiVideoJobId}`);
+        const job: AIVideoJob = await res.json();
+        setAiVideoJob(job);
+        if (job.status === "complete" || job.status === "error") {
+          clearInterval(interval);
+        }
+      } catch {
+        // ignore polling errors
+      }
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [aiVideoJobId]);
 
   const fetchRecentJobs = useCallback(async () => {
     try {
@@ -270,10 +307,128 @@ export default function RenderPage() {
             </div>
           </div>
 
+          {/* Video source selection */}
+          <div className="bg-surface border border-border rounded-xl p-5 space-y-4">
+            <h2 className="font-semibold text-sm uppercase tracking-wider text-muted">
+              3. Fonte de Video
+            </h2>
+            <div className="space-y-3">
+              {videoSources.map((vs) => (
+                <label
+                  key={vs.id}
+                  className={cn(
+                    "flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all",
+                    selectedVideoSource === vs.id
+                      ? "border-accent bg-accent/10"
+                      : "border-border hover:border-border-hover"
+                  )}
+                >
+                  <input
+                    type="radio"
+                    name="videoSource"
+                    value={vs.id}
+                    checked={selectedVideoSource === vs.id}
+                    onChange={() => setSelectedVideoSource(vs.id)}
+                    className="accent-accent"
+                  />
+                  <span className="text-2xl">{vs.icon}</span>
+                  <div className="flex-1">
+                    <p className="font-medium text-sm">{vs.label}</p>
+                    <p className="text-xs text-muted mt-0.5">{vs.description}</p>
+                  </div>
+                  {vs.cost && (
+                    <span className="text-xs text-muted px-2 py-1 bg-background rounded-lg">
+                      {vs.cost}
+                    </span>
+                  )}
+                </label>
+              ))}
+            </div>
+
+            {/* AI Video details when Minimax selected */}
+            {selectedVideoSource === "minimax" && selectedScript && (
+              <div className="p-4 bg-accent/5 border border-accent/20 rounded-lg space-y-2">
+                <p className="text-sm font-medium text-accent">Minimax Hailuo AI Video</p>
+                {(() => {
+                  const sceneRegex = /\[CENA\s*\d+/gi;
+                  const matches = selectedScript.body.match(sceneRegex) || [];
+                  const sceneCount = matches.length;
+                  const costPerScene = 0.33;
+                  const batches = Math.ceil(sceneCount / 3);
+                  return (
+                    <>
+                      <div className="grid grid-cols-3 gap-2 text-xs">
+                        <div className="bg-background rounded-lg p-2 text-center">
+                          <p className="text-muted">Cenas</p>
+                          <p className="font-bold text-lg">{sceneCount}</p>
+                        </div>
+                        <div className="bg-background rounded-lg p-2 text-center">
+                          <p className="text-muted">Custo est.</p>
+                          <p className="font-bold text-lg">${(sceneCount * costPerScene).toFixed(2)}</p>
+                        </div>
+                        <div className="bg-background rounded-lg p-2 text-center">
+                          <p className="text-muted">Tempo est.</p>
+                          <p className="font-bold text-lg">~{batches * 5}min</p>
+                        </div>
+                      </div>
+                      <p className="text-xs text-muted">
+                        Cada cena gera um clip de 6s em 1080P. Cenas sao processadas em paralelo (3 por vez).
+                      </p>
+                    </>
+                  );
+                })()}
+              </div>
+            )}
+
+            {/* AI Video job progress */}
+            {aiVideoJob && selectedVideoSource === "minimax" && (
+              <div className="p-4 bg-surface border border-border rounded-lg space-y-3">
+                <div className="flex justify-between text-xs text-muted">
+                  <span>
+                    {aiVideoJob.status === "queued" && "Na fila..."}
+                    {aiVideoJob.status === "generating" && "Gerando cenas com IA..."}
+                    {aiVideoJob.status === "complete" && "Cenas prontas!"}
+                    {aiVideoJob.status === "error" && "Erro na geracao"}
+                  </span>
+                  <span>{aiVideoJob.progress}%</span>
+                </div>
+                <div className="w-full bg-background rounded-full h-2">
+                  <div
+                    className={cn(
+                      "h-2 rounded-full transition-all duration-500",
+                      aiVideoJob.status === "error" ? "bg-red-500" : "bg-accent"
+                    )}
+                    style={{ width: `${aiVideoJob.progress}%` }}
+                  />
+                </div>
+                {/* Per-scene status */}
+                <div className="grid grid-cols-4 gap-1">
+                  {aiVideoJob.scenes.map((scene) => (
+                    <div
+                      key={scene.index}
+                      className={cn(
+                        "text-[10px] text-center py-1 rounded",
+                        scene.status === "complete" && "bg-green-500/20 text-green-400",
+                        scene.status === "generating" && "bg-yellow-500/20 text-yellow-400",
+                        scene.status === "failed" && "bg-red-500/20 text-red-400",
+                        scene.status === "pending" && "bg-background text-muted"
+                      )}
+                    >
+                      Cena {scene.index}
+                    </div>
+                  ))}
+                </div>
+                {aiVideoJob.error && (
+                  <p className="text-xs text-red-400">{aiVideoJob.error}</p>
+                )}
+              </div>
+            )}
+          </div>
+
           {/* Voice provider selection */}
           <div className="bg-surface border border-border rounded-xl p-5 space-y-4">
             <h2 className="font-semibold text-sm uppercase tracking-wider text-muted">
-              3. Provedor de Voz
+              4. Provedor de Voz
             </h2>
             <div className="grid grid-cols-3 gap-3">
               {voiceProviders.map((p) => (
@@ -297,7 +452,7 @@ export default function RenderPage() {
           {/* Voice selection */}
           <div className="bg-surface border border-border rounded-xl p-5 space-y-4">
             <h2 className="font-semibold text-sm uppercase tracking-wider text-muted">
-              4. Escolha a Voz
+              5. Escolha a Voz
             </h2>
             <div className="grid grid-cols-3 gap-3">
               {voices.map((v) => (

@@ -672,6 +672,119 @@ export default function SettingsPage() {
         </details>
       </div>
 
+      {/* Minimax AI Video */}
+      <div className="bg-surface border border-border rounded-xl p-6">
+        <h2 className="font-semibold text-lg mb-4">Minimax AI Video</h2>
+        <p className="text-xs text-muted mb-4">
+          Gere videos com IA que batem exatamente com as descricoes de cena do roteiro.
+          Cada [CENA X] vira um clip customizado de 6 segundos.
+        </p>
+
+        <div className="mb-4">
+          <label className="block text-sm font-medium mb-1">Minimax API Key</label>
+          <p className="text-xs text-muted mb-2">
+            Obtenha em{" "}
+            <a
+              href="https://platform.minimax.io"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-accent underline"
+            >
+              platform.minimax.io
+            </a>
+            . ~$0.33 por cena em 1080P.
+          </p>
+          <div className="flex gap-2">
+            <input
+              type="password"
+              value={settings.minimaxApiKey || ""}
+              onChange={(e) =>
+                setSettings({ ...settings, minimaxApiKey: e.target.value })
+              }
+              placeholder="eyJ..."
+              className="flex-1 bg-background border border-border rounded-lg p-2.5 text-sm text-foreground placeholder:text-muted/50 focus:outline-none focus:border-accent"
+            />
+            <button
+              onClick={async () => {
+                if (!settings.minimaxApiKey) return;
+                setTestResults((prev) => ({ ...prev, minimax: "loading" }));
+                try {
+                  const res = await fetch("https://api.minimax.io/v1/files/retrieve", {
+                    method: "POST",
+                    headers: {
+                      Authorization: `Bearer ${settings.minimaxApiKey}`,
+                      "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ file_id: "test" }),
+                  });
+                  // A valid key returns a structured error (not 401)
+                  const data = await res.json();
+                  const isValid = data.base_resp?.status_code !== undefined;
+                  setTestResults((prev) => ({
+                    ...prev,
+                    minimax: isValid ? "success" : "error",
+                  }));
+                } catch {
+                  setTestResults((prev) => ({ ...prev, minimax: "error" }));
+                }
+                setTimeout(
+                  () =>
+                    setTestResults((prev) => ({
+                      ...prev,
+                      minimax: undefined as unknown as "loading",
+                    })),
+                  3000
+                );
+              }}
+              className="px-4 py-2 bg-accent/20 text-accent rounded-lg text-sm hover:bg-accent/30 transition-colors"
+            >
+              {testResults["minimax"] === "loading"
+                ? "..."
+                : testResults["minimax"] === "success"
+                  ? "Conectado!"
+                  : testResults["minimax"] === "error"
+                    ? "Falhou"
+                    : "Testar Conexao"}
+            </button>
+          </div>
+        </div>
+
+        {/* Video Source Default */}
+        <div>
+          <label className="block text-sm font-medium mb-2">Fonte de Video Padrao</label>
+          <div className="space-y-2">
+            {([
+              { value: "none" as const, label: "Sem fundo (gradiente)", desc: "Fundo animado, custo zero" },
+              { value: "pexels" as const, label: "Stock Footage (Pexels)", desc: "Videos genericos de banco de imagem" },
+              { value: "minimax" as const, label: "AI Video (Minimax)", desc: "Cenas geradas por IA, ~$0.33/cena" },
+            ]).map((src) => (
+              <label
+                key={src.value}
+                className={cn(
+                  "flex items-center gap-3 p-3 rounded-lg cursor-pointer border transition-colors",
+                  settings.videoSource === src.value
+                    ? "border-accent bg-accent/5"
+                    : "border-border bg-background hover:border-border/80"
+                )}
+              >
+                <input
+                  type="radio"
+                  name="videoSource"
+                  value={src.value}
+                  checked={settings.videoSource === src.value}
+                  onChange={() => setSettings({ ...settings, videoSource: src.value })}
+                  className="accent-accent"
+                />
+                <div>
+                  <p className="text-sm font-medium">{src.label}</p>
+                  <p className="text-xs text-muted">{src.desc}</p>
+                </div>
+              </label>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* Team Members Placeholder */}
       <div className="bg-surface border border-border rounded-xl p-6">
         <h2 className="font-semibold text-lg mb-2">Equipe</h2>

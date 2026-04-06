@@ -139,4 +139,6 @@ export interface AppSettings {
   autoSchedule?: boolean;
   optimizedTimes?: Record<string, string[]>;
   canva?: CanvaSettings;
+  minimaxApiKey?: string;
+  videoSource?: "pexels" | "minimax" | "none";
 }

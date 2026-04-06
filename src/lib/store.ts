@@ -211,6 +211,8 @@ const defaultSettings: AppSettings = {
     canvaAccessToken: "",
     brandTemplates: {},
   },
+  minimaxApiKey: "",
+  videoSource: "none",
   optimizedTimes: {
     instagram: ["09:00", "12:00", "18:00", "21:00"],
     tiktok: ["07:00", "12:00", "17:00", "21:00", "23:00"],
